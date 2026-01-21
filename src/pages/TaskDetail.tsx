@@ -1,45 +1,45 @@
-import { useParams, useNavigate } from 'react-router-dom'
-import { useTask, useTaskLogs } from '@/hooks/useTasks'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Card } from '@/components/ui/card'
-import { ArrowLeft } from 'lucide-react'
-
-const formatDate = (dateString: string | undefined): string => {
-  if (!dateString) return 'N/A'
-  const date = new Date(dateString)
-  return isNaN(date.getTime()) ? dateString : date.toLocaleString()
-}
+import { useParams, useNavigate } from "react-router-dom";
+import { useTask, useTaskLogs, useTaskStatusAuditLogs } from "@/hooks/useTasks";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
 
 export function TaskDetail() {
-  const { taskId } = useParams<{ taskId: string }>()
-  const navigate = useNavigate()
-  const taskIdNum = taskId ? parseInt(taskId, 10) : 0
-  const { data: taskDetail, isLoading } = useTask(taskIdNum)
-  const { data: taskLogs } = useTaskLogs(taskIdNum)
+  const { taskId } = useParams<{ taskId: string }>();
+  const navigate = useNavigate();
+  const taskIdNum = taskId ? parseInt(taskId, 10) : 0;
+  const { data: taskDetail, isLoading } = useTask(taskIdNum);
+  const { data: taskLogs } = useTaskLogs(taskIdNum);
+  const { data: taskStatusAuditLogs } = useTaskStatusAuditLogs(taskIdNum);
 
-  const task = taskDetail?.data?.task
+  const task = taskDetail?.data?.task;
+  const taskStatusAuditLogsData = taskStatusAuditLogs?.data;
 
   if (isLoading) {
-    return <div className="p-6">Loading task details...</div>
+    return <div className="p-6">Loading task details...</div>;
   }
 
   if (!task) {
     return (
       <div className="p-6">
-        <Button variant="outline" onClick={() => navigate('/tasks')} className="mb-4">
+        <Button
+          variant="outline"
+          onClick={() => navigate("/tasks")}
+          className="mb-4"
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Tasks
         </Button>
         <div>Task not found</div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={() => navigate('/tasks')}>
+        <Button variant="outline" onClick={() => navigate("/tasks")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
@@ -53,7 +53,7 @@ export function TaskDetail() {
         </div>
         <div>
           <Label className="text-xs text-muted-foreground">Agent ID</Label>
-          <p className="font-medium">{task.agent_id || 'N/A'}</p>
+          <p className="font-medium">{task.agent_id || "N/A"}</p>
         </div>
         <div>
           <Label className="text-xs text-muted-foreground">Caller ID</Label>
@@ -65,11 +65,11 @@ export function TaskDetail() {
         </div>
         <div>
           <Label className="text-xs text-muted-foreground">Created At</Label>
-          <p className="font-medium">{formatDate(task.created_at)}</p>
+          <p className="font-medium">{(task.created_at)}</p>
         </div>
         <div>
           <Label className="text-xs text-muted-foreground">Updated At</Label>
-          <p className="font-medium">{formatDate(task.updated_at)}</p>
+          <p className="font-medium">{(task.updated_at)}</p>
         </div>
       </div>
 
@@ -99,18 +99,22 @@ export function TaskDetail() {
                     {step.plugin && (
                       <div className="text-sm space-y-1">
                         <p>
-                          <strong>{step.step_type}:</strong> {step.plugin.plugin_id}
-                          {step.plugin.options?.instance && ` (instance: ${step.plugin.options.instance})`}
-                          {step.plugin.force !== undefined && ` (force: ${step.plugin.force})`}
+                          <strong>{step.step_type}:</strong>{" "}
+                          {step.plugin.plugin_id}
+                          {step.plugin.options?.instance &&
+                            ` (instance: ${step.plugin.options.instance})`}
+                          {step.plugin.force !== undefined &&
+                            ` (force: ${step.plugin.force})`}
                         </p>
-                        {step.plugin.env_vars && Object.keys(step.plugin.env_vars).length > 0 && (
-                          <div className="mt-1 ml-4 text-xs">
-                            <strong>Env Vars:</strong>
-                            <pre className="bg-muted p-2 rounded mt-1">
-                              {JSON.stringify(step.plugin.env_vars, null, 2)}
-                            </pre>
-                          </div>
-                        )}
+                        {step.plugin.env_vars &&
+                          Object.keys(step.plugin.env_vars).length > 0 && (
+                            <div className="mt-1 ml-4 text-xs">
+                              <strong>Env Vars:</strong>
+                              <pre className="bg-muted p-2 rounded mt-1">
+                                {JSON.stringify(step.plugin.env_vars, null, 2)}
+                              </pre>
+                            </div>
+                          )}
                       </div>
                     )}
                   </div>
@@ -123,7 +127,9 @@ export function TaskDetail() {
                         <div key={logIndex} className="text-xs space-y-1">
                           {log.stdout && (
                             <div>
-                              <strong className="text-green-600">STDOUT:</strong>
+                              <strong className="text-green-600">
+                                STDOUT:
+                              </strong>
                               <pre className="bg-muted p-2 rounded mt-1 overflow-x-auto whitespace-pre-wrap">
                                 {log.stdout}
                               </pre>
@@ -151,8 +157,39 @@ export function TaskDetail() {
         ) : (
           <p className="text-sm text-muted-foreground">No steps</p>
         )}
+
+        {taskStatusAuditLogsData?.audit_logs && taskStatusAuditLogsData.audit_logs.length > 0 && (
+          <div className="mt-6">
+            <Label className="text-sm font-semibold mb-2 block">
+              Status Audit Logs
+            </Label>
+
+            <div className="space-y-2">
+              {taskStatusAuditLogsData.audit_logs.sort((a, b) => a.id - b.id).map(
+                ({ id, status, created_at }) => (
+                  <Card key={id} className="p-3">
+                    <div className="grid grid-cols-5 gap-4 text-sm">
+                      <div className="col-span-1">
+                        <Label className="text-xs text-muted-foreground">
+                          Status
+                        </Label>
+                        <p className="font-medium">{status}</p>
+                      </div>
+
+                      <div className="col-span-1">
+                        <Label className="text-xs text-muted-foreground">
+                          Timestamp
+                        </Label>
+                        <p className="font-medium">{created_at}</p>
+                      </div>
+                    </div>
+                  </Card>
+                ),
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
-  )
+  );
 }
-

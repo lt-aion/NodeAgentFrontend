@@ -29,7 +29,7 @@ export function Plugins() {
   const [editingPlugin, setEditingPlugin] = useState<string | null>(null)
   const [formData, setFormData] = useState<CreatePluginRequest>({
     plugin_id: '',
-    plugin_name:'',
+    plugin_name: '',
     publisher_name: '',
     artifact_url: '',
     version: '',
@@ -51,7 +51,6 @@ export function Plugins() {
         plugin_id: formData.plugin_id,
         plugin_name: formData.plugin_name,
         publisher_name: formData.publisher_name,
-        published_at: formData.published_at,
         artifact_url: formData.artifact_url,
         version: formData.version,
         description: formData.description,
@@ -61,13 +60,13 @@ export function Plugins() {
       setOpen(false)
       setFormData({
         plugin_id: '',
-        plugin_name:'',
+        plugin_name: '',
         publisher_name: '',
         artifact_url: '',
         version: '',
         description: '',
         driver_type: 'systemd',
-        published_at: new Date().toISOString(),
+        published_at: undefined,
       })
     } catch (err) {
       console.error('Failed to create plugin:', err)
@@ -81,23 +80,23 @@ export function Plugins() {
         plugin_name: formData.plugin_name,
         publisher_name: formData.publisher_name,
         artifact_url: formData.artifact_url,
+        published_at: formData.published_at || new Date().toISOString(),
         version: formData.version,
         description: formData.description,
         driver_type: formData.driver_type,
-        published_at: formData.published_at,
       }
       await updatePlugin.mutateAsync({ pluginId: editingPlugin, data: updateData })
       setOpen(false)
       setEditingPlugin(null)
       setFormData({
         plugin_id: '',
-        plugin_name:'',
+        plugin_name: '',
         publisher_name: '',
         artifact_url: '',
         version: '',
         description: '',
         driver_type: 'systemd',
-        published_at: new Date().toISOString(),
+        published_at: undefined,
       })
     } catch (err) {
       console.error('Failed to update plugin:', err)
@@ -118,7 +117,7 @@ export function Plugins() {
     setEditingPlugin(plugin.plugin_id)
     setFormData({
       plugin_id: plugin.plugin_id,
-      plugin_name:plugin.plugin_name,
+      plugin_name: plugin.plugin_name,
       publisher_name: plugin.publisher_name,
       artifact_url: plugin.artifact_url,
       version: plugin.version,
@@ -144,13 +143,13 @@ export function Plugins() {
                   setEditingPlugin(null)
                   setFormData({
                     plugin_id: '',
-                    plugin_name:'',
+                    plugin_name: '',
                     publisher_name: '',
                     artifact_url: '',
                     version: '',
+                    published_at: new Date().toISOString(),
                     description: '',
                     driver_type: 'systemd',
-                    published_at: new Date().toISOString(),
                   })
                 }}>
                   Create Plugin
@@ -163,6 +162,7 @@ export function Plugins() {
                     {editingPlugin ? 'Update plugin information' : 'Create a new plugin'}
                   </DialogDescription>
                 </DialogHeader>
+
                 <div className="space-y-4">
                   {!editingPlugin && (
                     <div>
@@ -214,29 +214,22 @@ export function Plugins() {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="published_at">Published At</Label>
-                    <Input
-                      id="published_at"
-                      type="datetime-local"
-                      value={formData.published_at ? new Date(formData.published_at).toISOString().slice(0, 16) : ''}
-                      onChange={(e) => setFormData({ ...formData, published_at: e.target.value ? new Date(e.target.value).toISOString() : new Date().toISOString() })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="artifact_url">Artifact URL</Label>
-                    <Input
-                      id="artifact_url"
-                      value={formData.artifact_url}
-                      onChange={(e) => setFormData({ ...formData, artifact_url: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="version">Version</Label>
-                    <Input
-                      id="version"
-                      value={formData.version}
-                      onChange={(e) => setFormData({ ...formData, version: e.target.value })}
-                    />
+                    <div>
+                      <Label htmlFor="artifact_url">Artifact URL</Label>
+                      <Input
+                        id="artifact_url"
+                        value={formData.artifact_url}
+                        onChange={(e) => setFormData({ ...formData, artifact_url: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="version">Version</Label>
+                      <Input
+                        id="version"
+                        value={formData.version}
+                        onChange={(e) => setFormData({ ...formData, version: e.target.value })}
+                      />
+                    </div>
                   </div>
                 </div>
                 <DialogFooter>

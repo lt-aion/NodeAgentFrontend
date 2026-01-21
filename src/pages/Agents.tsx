@@ -11,6 +11,38 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
+
+const INACTIVE_THRESHOLD_MS = 5 * 60 * 1000 // 5 minutes
+
+// Helper to handle backend sending local time with 'Z' suffix
+function parseAgentTime(timeStr: string): Date {
+  if (timeStr.endsWith('Z')) {
+    return new Date(timeStr.slice(0, -1))
+  }
+  return new Date(timeStr)
+}
+
+function getAgentStatus(lastSeenAt: string, originalStatus: string): { status: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' } {
+  const lastSeen = parseAgentTime(lastSeenAt).getTime()
+  const now = Date.now()
+  const timeSinceLastSeen = now - lastSeen
+
+  if (timeSinceLastSeen > INACTIVE_THRESHOLD_MS) {
+    return { status: 'inactive', variant: 'secondary' }
+  }
+
+  switch (originalStatus) {
+    case 'active':
+      return { status: 'active', variant: 'default' }
+    case 'inactive':
+      return { status: 'inactive', variant: 'secondary' }
+    case 'offline':
+      return { status: 'offline', variant: 'outline' }
+    default:
+      return { status: originalStatus, variant: 'outline' }
+  }
+}
 
 export function Agents() {
   const [status, setStatus] = useState<string>('')
@@ -77,9 +109,14 @@ export function Agents() {
                     <TableRow key={agent.agent_id}>
                       <TableCell>{agent.agent_id}</TableCell>
                       <TableCell>{agent.node_id}</TableCell>
-                      <TableCell>{agent.status}</TableCell>
+                      <TableCell>
+                        {(() => {
+                          const { status, variant } = getAgentStatus(agent.last_seen_at, agent.status)
+                          return <Badge variant={variant}>{status}</Badge>
+                        })()}
+                      </TableCell>
                       <TableCell>{agent.version}</TableCell>
-                      <TableCell>{new Date(agent.last_seen_at).toLocaleString()}</TableCell>
+                      <TableCell>{parseAgentTime(agent.last_seen_at).toLocaleString()}</TableCell>
                       <TableCell>
                         <Button
                           variant="destructive"
