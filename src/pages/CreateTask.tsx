@@ -27,7 +27,7 @@ interface TaskStep {
   step_type: PluginStepType
   plugin_id: string
   instance?: string
-  env_vars?: Record<string, string>
+  env_vars?: { key: string; value: string }[]
   force?: boolean
 }
 
@@ -81,8 +81,12 @@ export function CreateTask() {
           instance: step.instance,
         }
       }
-      if (step.env_vars && Object.keys(step.env_vars).length > 0) {
-        plugin.env_vars = step.env_vars
+      if (step.env_vars && step.env_vars.length > 0) {
+        plugin.env_vars = Object.fromEntries(
+          step.env_vars
+            .filter(ev => ev.key.trim() !== '')
+            .map(ev => [ev.key, ev.value])
+        )
       }
       if (step.force !== undefined) {
         plugin.force = step.force
@@ -263,75 +267,54 @@ export function CreateTask() {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              const currentEnvVars = step.env_vars || {}
+                              const currentEnvVars = step.env_vars || []
                               updateStep(index, {
-                                env_vars: { ...currentEnvVars, '': '' },
+                                env_vars: [...currentEnvVars, { key: '', value: '' }],
                               })
                             }}
                           >
                             Add Env Var
                           </Button>
                         </div>
-                        {step.env_vars && Object.keys(step.env_vars).length > 0 ? (
+                        {step.env_vars && step.env_vars.length > 0 ? (
                           <div className="space-y-2">
-                            {Object.entries(step.env_vars).map(([key, value], envIndex) => {
-                              const entryKey = `${index}-${envIndex}-${key}`
-                              return (
-                                <div key={entryKey} className="flex gap-2">
-                                  <Input
-                                    placeholder="Key"
-                                    value={key}
-                                    onChange={(e) => {
-                                      const newEnvVars = { ...step.env_vars }
-                                      const oldValue = newEnvVars[key] || ''
-                                      delete newEnvVars[key]
-                                      const newKey = e.target.value.trim()
-                                      if (newKey) {
-                                        newEnvVars[newKey] = oldValue
-                                      } else if (oldValue) {
-                                        newEnvVars[''] = oldValue
-                                      }
-                                      updateStep(index, { env_vars: newEnvVars })
-                                    }}
-                                    className="flex-1"
-                                  />
-                                  <Input
-                                    placeholder="Value"
-                                    value={value || ''}
-                                    onChange={(e) => {
-                                      const newEnvVars = { ...step.env_vars }
-                                      if (key || e.target.value) {
-                                        if (!key && e.target.value) {
-                                          delete newEnvVars['']
-                                          newEnvVars[''] = e.target.value
-                                        } else if (key) {
-                                          newEnvVars[key] = e.target.value
-                                        }
-                                        updateStep(index, { env_vars: newEnvVars })
-                                      }
-                                    }}
-                                    className="flex-1"
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => {
-                                      const newEnvVars = { ...step.env_vars }
-                                      delete newEnvVars[key]
-                                      const filtered = Object.fromEntries(
-                                        Object.entries(newEnvVars).filter(([k, v]) => k || v)
-                                      )
-                                      updateStep(index, {
-                                        env_vars: Object.keys(filtered).length > 0 ? filtered : undefined,
-                                      })
-                                    }}
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              )
-                            })}
+                            {step.env_vars.map((ev, envIndex) => (
+                              <div key={`${index}-${envIndex}`} className="flex gap-2">
+                                <Input
+                                  placeholder="Key"
+                                  value={ev.key}
+                                  onChange={(e) => {
+                                    const newEnvVars = [...(step.env_vars || [])]
+                                    newEnvVars[envIndex] = { ...ev, key: e.target.value }
+                                    updateStep(index, { env_vars: newEnvVars })
+                                  }}
+                                  className="flex-1"
+                                />
+                                <Input
+                                  placeholder="Value"
+                                  value={ev.value}
+                                  onChange={(e) => {
+                                    const newEnvVars = [...(step.env_vars || [])]
+                                    newEnvVars[envIndex] = { ...ev, value: e.target.value }
+                                    updateStep(index, { env_vars: newEnvVars })
+                                  }}
+                                  className="flex-1"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => {
+                                    const newEnvVars = (step.env_vars || []).filter((_, i) => i !== envIndex)
+                                    updateStep(index, {
+                                      env_vars: newEnvVars.length > 0 ? newEnvVars : undefined,
+                                    })
+                                  }}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
                           </div>
                         ) : (
                           <p className="text-xs text-muted-foreground">

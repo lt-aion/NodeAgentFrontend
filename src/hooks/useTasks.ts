@@ -23,7 +23,7 @@ export function useCreateTask() {
 
   return useMutation({
     mutationFn: (req: CreateTaskRequest) => orchAPI.createTask(req),
-    onSuccess: async (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] })
       queryClient.invalidateQueries({ queryKey: ['task'] })
     },
@@ -49,3 +49,10 @@ export function useTaskLogs(taskId: number) {
   })
 }
 
+export function useTaskStatusAuditLogs(taskId: number) {
+  return useQuery({
+    queryKey: ['task-audit', taskId],
+    queryFn: () => orchAPI.getTaskStatusAuditLogs(taskId),
+    enabled: !!taskId,
+  })
+}
