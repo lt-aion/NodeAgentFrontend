@@ -1,5 +1,5 @@
-const ORCH_BASE_URL = import.meta.env.VITE_ORCH_URL || "http://task.13.204.69.129.nip.io";
-const AUTHN_BASE_URL = import.meta.env.VITE_AUTHN_URL || "http://auth.13.204.69.129.nip.io/api";
+const ORCH_BASE_URL = import.meta.env.VITE_ORCH_URL || "http://task.13.234.74.6.nip.io";
+const AUTHN_BASE_URL = import.meta.env.VITE_AUTHN_URL || "http://auth.13.234.74.6.nip.io/api";
 
 export interface APIResponse<T> {
   status: "success" | "error";
